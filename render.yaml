@@ -1,5 +1,5 @@
-# Blueprint de referencia. El workspace de Redes debe tener acceso GitHub
-# al repo gussephe-benjamin/utopp-metrics (Settings → Integrations → GitHub).
+# Blueprint de referencia para el workspace Dev Utopp.
+# El workspace debe tener acceso GitHub a gussephe-benjamin/utopp-metrics.
 services:
   - type: web
     name: utopp-metrics-api

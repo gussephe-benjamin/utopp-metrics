@@ -20,6 +20,11 @@ app.include_router(auth_router)
 app.include_router(metrics_router)
 
 
+@app.get("/")
+def root():
+    return {"ok": True, "service": "utopp-metrics"}
+
+
 @app.get("/health")
 def health():
     ok = False
