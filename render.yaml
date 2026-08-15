@@ -1,0 +1,30 @@
+# Blueprint de referencia. El workspace de Redes debe tener acceso GitHub
+# al repo gussephe-benjamin/utopp-metrics (Settings → Integrations → GitHub).
+services:
+  - type: web
+    name: utopp-metrics-api
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: pip install -r Backend/requirements.txt
+    startCommand: uvicorn app.main:app --app-dir Backend --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: METRICS_JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+    healthCheckPath: /health
+
+  - type: web
+    name: utopp-metrics
+    runtime: static
+    plan: free
+    branch: main
+    buildCommand: npm ci --prefix Frontend && npm run build --prefix Frontend
+    staticPublishPath: Frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false
