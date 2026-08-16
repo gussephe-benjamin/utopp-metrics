@@ -16,15 +16,25 @@ export type MetricBlock = {
   series: SeriesPoint[]
 }
 
-export type MetricsResponse = {
-  timezone: string
-  granularity: "week" | "month" | "year"
-  periods: number
+export type LifetimeBlock = {
+  first_event_at: string | null
+  last_event_at: string | null
+  as_of: string
   north_star: MetricBlock
   useful_supply: MetricBlock
   match: MetricBlock
   habit: MetricBlock
-  signups_bridge: { kind: "count"; range: { value: number } }
+}
+
+export type MetricsResponse = {
+  timezone: string
+  granularity: "week" | "month" | "year"
+  periods: number
+  lifetime: LifetimeBlock
+  north_star: MetricBlock
+  useful_supply: MetricBlock
+  match: MetricBlock
+  habit: MetricBlock
 }
 
 export function getToken() {

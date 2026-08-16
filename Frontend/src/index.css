@@ -10,8 +10,20 @@ button, input, select { font: inherit; }
 .shell { max-width: 1120px; margin: 0 auto; padding: 24px 20px 64px; }
 .topbar {
   display: flex; justify-content: space-between; align-items: center;
-  gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+  gap: 16px; margin-bottom: 8px; flex-wrap: wrap;
 }
+.section { margin-top: 28px; }
+.section-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.section h1 { margin: 0 0 4px; font-size: 18px; }
+.glossary dt {
+  font-weight: 700; margin-top: 14px; font-size: 13px;
+  text-transform: uppercase; letter-spacing: 0.06em; color: #6d28d9;
+}
+.glossary dd { margin: 6px 0 0; color: #334155; line-height: 1.5; font-size: 14px; }
+.glossary code { font-size: 12px; background: #e2e8f0; padding: 1px 5px; border-radius: 4px; }
 .brand { font-weight: 800; letter-spacing: 0.04em; color: #6d28d9; }
 .muted { color: #64748b; font-size: 13px; }
 .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -48,8 +60,11 @@ button, input, select { font: inherit; }
 .error { color: #b91c1c; font-size: 13px; }
 .tooltip {
   position: absolute; z-index: 5; background: #0f172a; color: #fff;
-  font-size: 12px; padding: 8px 10px; border-radius: 8px; pointer-events: none;
-  white-space: nowrap; transform: translate(-50%, -120%);
+  font-size: 12px; padding: 10px 12px; border-radius: 8px; pointer-events: none;
+  white-space: normal; min-width: 200px; max-width: 280px;
+  transform: translate(-50%, -110%); line-height: 1.45;
 }
+.tooltip-title { font-weight: 700; margin-bottom: 4px; }
+.tooltip-pct { margin-top: 4px; font-weight: 700; }
 .card { position: relative; }
 .linkish { background: none; border: 0; color: #64748b; cursor: pointer; text-decoration: underline; }

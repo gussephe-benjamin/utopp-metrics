@@ -163,7 +163,9 @@ def _fetch_signups(db: Session, start: datetime, end: datetime) -> list[tuple]:
     rows = db.execute(
         text(
             """
-            SELECT a.event_id::text AS event_id, a.registered_at
+            SELECT lower(a.email) AS email,
+                   a.event_id::text AS event_id,
+                   a.registered_at
             FROM formulario.attendees a
             JOIN formulario.events e ON e.id = a.event_id
             WHERE COALESCE(e.is_draft, false) IS FALSE
@@ -173,7 +175,22 @@ def _fetch_signups(db: Session, start: datetime, end: datetime) -> list[tuple]:
         ),
         {"start": start, "end": end},
     ).all()
-    return [(r.event_id, r.registered_at) for r in rows]
+    return [(r.email, r.event_id, r.registered_at) for r in rows]
+
+
+def _fetch_event_span(db: Session) -> tuple[datetime | None, datetime | None]:
+    row = db.execute(
+        text(
+            """
+            SELECT MIN(e.created_at) AS first_at, MAX(e.created_at) AS last_at
+            FROM formulario.events e
+            WHERE COALESCE(e.is_draft, false) IS FALSE
+            """
+        )
+    ).first()
+    if row is None:
+        return None, None
+    return row.first_at, row.last_at
 
 
 def _fetch_published(db: Session, start: datetime, end: datetime) -> list[tuple]:
@@ -235,24 +252,137 @@ def _fetch_views(db: Session, start: datetime, end: datetime) -> list[tuple]:
     return [(r.user_id, r.event_id, r.created_at) for r in rows]
 
 
+def _count_unique_pairs(
+    rows: list[tuple],
+    start: datetime,
+    end: datetime,
+    pair_idx: tuple[int, int] = (0, 1),
+    time_idx: int = 2,
+) -> int:
+    seen: set = set()
+    i, j = pair_idx
+    for row in rows:
+        ts = row[time_idx]
+        if ts is None:
+            continue
+        if _in_bucket(ts, start, end):
+            seen.add((row[i], row[j]))
+    return len(seen)
+
+
 def _count_unique_pairs_in_windows(
     rows: list[tuple],
     windows: list[tuple[datetime, datetime]],
     pair_idx: tuple[int, int] = (0, 1),
     time_idx: int = 2,
 ) -> list[int]:
-    counts = []
-    i, j = pair_idx
+    return [_count_unique_pairs(rows, start, end, pair_idx, time_idx) for start, end in windows]
+
+
+def _count_rows_in_window(rows: list[tuple], start: datetime, end: datetime, time_idx: int = 2) -> int:
+    n = 0
+    for row in rows:
+        ts = row[time_idx]
+        if ts is None:
+            continue
+        if _in_bucket(ts, start, end):
+            n += 1
+    return n
+
+
+def north_star_rates(
+    checkins: list[tuple],
+    signups: list[tuple],
+    windows: list[tuple[datetime, datetime]],
+) -> list[tuple[float, float]]:
+    nums = _count_unique_pairs_in_windows(checkins, windows)
+    dens = _count_unique_pairs_in_windows(signups, windows)
+    return [(float(n), float(d)) for n, d in zip(nums, dens)]
+
+
+def useful_supply_rates(
+    published: list[tuple],
+    windows: list[tuple[datetime, datetime]],
+) -> list[tuple[float, float]]:
+    out: list[tuple[float, float]] = []
     for start, end in windows:
-        seen: set = set()
-        for row in rows:
-            ts = row[time_idx]
-            if ts is None:
+        num = 0
+        den = 0
+        for _eid, created, useful in published:
+            if created is None or not _in_bucket(created, start, end):
                 continue
-            if _in_bucket(ts, start, end):
-                seen.add((row[i], row[j]))
-        counts.append(len(seen))
-    return counts
+            den += 1
+            if useful:
+                num += 1
+        out.append((float(num), float(den)))
+    return out
+
+
+def _lifetime_rate_block(
+    num: float,
+    den: float,
+    *,
+    available: bool = True,
+) -> dict:
+    if not available:
+        return {
+            "available": False,
+            "kind": "rate",
+            "range": {"value": None, "delta_pct": None},
+            "series": [],
+        }
+    return {
+        "available": True,
+        "kind": "rate",
+        "range": {"value": (num / den if den else None), "delta_pct": None},
+        "series": [],
+    }
+
+
+def compute_lifetime(
+    *,
+    first_event_at: datetime | None,
+    last_event_at: datetime | None,
+    now: datetime,
+    checkins: list[tuple],
+    signups: list[tuple],
+    published: list[tuple],
+    views: list[tuple],
+    match_on: bool,
+) -> dict:
+    as_of = now.astimezone(LIMA)
+    first = first_event_at.astimezone(LIMA) if first_event_at else None
+    last = last_event_at.astimezone(LIMA) if last_event_at else None
+    payload = {
+        "first_event_at": first.isoformat() if first else None,
+        "last_event_at": last.isoformat() if last else None,
+        "as_of": as_of.isoformat(),
+    }
+    if first is None:
+        payload.update(
+            {
+                "north_star": _lifetime_rate_block(0, 0),
+                "useful_supply": _lifetime_rate_block(0, 0),
+                "match": _lifetime_rate_block(0, 0, available=match_on),
+                "habit": _lifetime_rate_block(0, 0),
+            }
+        )
+        return payload
+
+    ns_num = float(_count_unique_pairs(checkins, first, as_of))
+    ns_den = float(_count_unique_pairs(signups, first, as_of))
+    us_num, us_den = useful_supply_rates(published, [(first, as_of)])[0]
+    habit_num, habit_den = _habit_per_window(checkins, [(first, as_of)], yearly=True)[0]
+    payload["north_star"] = _lifetime_rate_block(ns_num, ns_den)
+    payload["useful_supply"] = _lifetime_rate_block(us_num, us_den)
+    payload["habit"] = _lifetime_rate_block(habit_num, habit_den)
+    if match_on:
+        match_num = float(_count_rows_in_window(signups, first, as_of))
+        match_den = float(_count_unique_pairs(views, first, as_of))
+        payload["match"] = _lifetime_rate_block(match_num, match_den)
+    else:
+        payload["match"] = _lifetime_rate_block(0, 0, available=False)
+    return payload
 
 
 def _habit_per_window(
@@ -295,9 +425,10 @@ def list_metrics(
     now: datetime | None = None,
 ) -> dict:
     periods = max(1, min(periods, 36))
-    windows = build_windows(granularity, periods, now)
-    range_start, range_end = windows[0][0], windows[-1][1]
-    lookback = range_start - timedelta(days=30)
+    as_of = (now or datetime.now(LIMA)).astimezone(LIMA)
+    windows = build_windows(granularity, periods, as_of)
+    _range_start, range_end = windows[0][0], windows[-1][1]
+    lookback = _range_start - timedelta(days=30)
 
     prev_windows = []
     cursor = prev_period_start(windows[0][0], granularity)
@@ -308,65 +439,42 @@ def list_metrics(
     prev_windows.reverse()
     prev_start = prev_windows[0][0]
 
+    first_event_at, last_event_at = _fetch_event_span(db)
     fetch_start = min(lookback, prev_start)
+    if first_event_at is not None:
+        fetch_start = min(fetch_start, first_event_at.astimezone(LIMA))
 
     checkins = _fetch_checkins(db, fetch_start, range_end)
-    signups = _fetch_signups(db, prev_start, range_end)
-    published = _fetch_published(db, prev_start, range_end)
+    signups = _fetch_signups(db, fetch_start, range_end)
+    published = _fetch_published(db, fetch_start, range_end)
     match_on = _match_available(db)
-    views = _fetch_views(db, prev_start, range_end) if match_on else []
+    views = _fetch_views(db, fetch_start, range_end) if match_on else []
 
-    ns_cur = _count_unique_pairs_in_windows(checkins, windows)
-    ns_prev = _count_unique_pairs_in_windows(checkins, prev_windows)
-    north = _metric_block(
-        windows=windows,
-        per_window=[(float(n), float(n)) for n in ns_cur],
-        kind="count",
-    )
-    north = _attach_delta(north, [float(n) for n in ns_prev], [float(n) for n in ns_prev])
+    ns_cur = north_star_rates(checkins, signups, windows)
+    ns_prev = north_star_rates(checkins, signups, prev_windows)
+    north = _metric_block(windows=windows, per_window=ns_cur, kind="rate")
+    north = _attach_delta(north, [n for n, _ in ns_prev], [d for _, d in ns_prev])
 
-    def useful_counts(wins):
-        counts = []
-        for start, end in wins:
-            n = 0
-            for _eid, created, useful in published:
-                if useful and created is not None and _in_bucket(created, start, end):
-                    n += 1
-            counts.append(n)
-        return counts
-
-    us_cur = useful_counts(windows)
-    us_prev = useful_counts(prev_windows)
-    supply = _metric_block(
-        windows=windows,
-        per_window=[(float(n), float(n)) for n in us_cur],
-        kind="count",
-    )
-    supply = _attach_delta(supply, [float(n) for n in us_prev], [float(n) for n in us_prev])
+    us_cur = useful_supply_rates(published, windows)
+    us_prev = useful_supply_rates(published, prev_windows)
+    supply = _metric_block(windows=windows, per_window=us_cur, kind="rate")
+    supply = _attach_delta(supply, [n for n, _ in us_prev], [d for _, d in us_prev])
 
     if match_on:
-        sign_cur = [
-            float(
-                sum(
-                    1
-                    for _eid, ts in signups
-                    if ts is not None and _in_bucket(ts, s, e)
-                )
-            )
-            for s, e in windows
-        ]
+        sign_cur = [_count_rows_in_window(signups, s, e) for s, e in windows]
         view_cur = _count_unique_pairs_in_windows(views, windows)
-        sign_prev = [
-            float(sum(1 for _eid, ts in signups if ts is not None and _in_bucket(ts, s, e)))
-            for s, e in prev_windows
-        ]
+        sign_prev = [_count_rows_in_window(signups, s, e) for s, e in prev_windows]
         view_prev = _count_unique_pairs_in_windows(views, prev_windows)
         match = _metric_block(
             windows=windows,
-            per_window=list(zip(sign_cur, [float(v) for v in view_cur])),
+            per_window=[(float(n), float(d)) for n, d in zip(sign_cur, view_cur)],
             kind="rate",
         )
-        match = _attach_delta(match, sign_prev, [float(v) for v in view_prev])
+        match = _attach_delta(
+            match,
+            [float(n) for n in sign_prev],
+            [float(d) for d in view_prev],
+        )
     else:
         match = _metric_block(windows=windows, per_window=[], kind="rate", available=False)
 
@@ -380,24 +488,24 @@ def list_metrics(
         [d for _, d in habit_prev],
     )
 
+    lifetime = compute_lifetime(
+        first_event_at=first_event_at,
+        last_event_at=last_event_at,
+        now=as_of,
+        checkins=checkins,
+        signups=signups,
+        published=published,
+        views=views,
+        match_on=match_on,
+    )
+
     return {
         "timezone": str(LIMA),
         "granularity": granularity,
         "periods": periods,
+        "lifetime": lifetime,
         "north_star": north,
         "useful_supply": supply,
         "match": match,
         "habit": habit,
-        "signups_bridge": {
-            "kind": "count",
-            "range": {
-                "value": float(
-                    sum(
-                        1
-                        for _eid, ts in signups
-                        if ts is not None and range_start <= ts.astimezone(LIMA) < range_end
-                    )
-                )
-            },
-        },
     }

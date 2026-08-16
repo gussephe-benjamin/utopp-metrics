@@ -1,6 +1,6 @@
 # Utopp Metrics
 
-Panel admin de la métrica estrella norte (asistencias verificadas) y tres métricas de apoyo.
+Panel admin de la métrica estrella norte (asistencia verificada / inscripciones) y tres métricas de apoyo, todas como porcentaje.
 
 Definiciones: [METRICS.md](./METRICS.md).
 
@@ -27,7 +27,7 @@ El MCP no puede clonar `utopp-metrics` hasta que la GitHub App de Render tenga *
    [Apply Blueprint](https://dashboard.render.com/blueprint/new?repo=https://github.com/gussephe-benjamin/utopp-metrics)
 3. Completa:
    - **DATABASE_URL**: connection string de la Postgres de Utopp (interna si el API está en el mismo workspace; externa + `sslmode=require` si está en Redes).
-   - **CORS_ORIGINS**: URL del sitio estático (`https://….onrender.com`).
+   - **CORS_ORIGINS**: orígenes del panel, separados por coma (`https://www.metrics.utopp.app`, `https://metrics.utopp.app`, y el `onrender.com` de respaldo).
    - **VITE_API_URL** (build del static): URL pública del API, sin slash final.
 
 El API escucha `0.0.0.0:$PORT` y `/health`. El panel es un static site con `publish path` `Frontend/dist`.
