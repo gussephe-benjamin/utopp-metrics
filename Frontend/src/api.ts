@@ -9,32 +9,84 @@ export type SeriesPoint = {
   denominator: number
 }
 
+/** Un punto del acumulado diario del mes en curso. */
+export type TrendPoint = {
+  /** Día que representa el punto (inicio del día, Lima). */
+  date: string
+  /** Corte con el que se calculó: fin de ese día, o "ahora" para el día actual. */
+  as_of: string
+  value: number | null
+  numerator: number
+  denominator: number
+}
+
 export type MetricBlock = {
   available: boolean
   kind: "count" | "rate"
   range: { value: number | null; delta_pct: number | null }
   series: SeriesPoint[]
+  /** Solo lo trae el mes en curso; vacío en el resto. */
+  trend: TrendPoint[]
 }
 
-export type LifetimeBlock = {
-  first_event_at: string | null
-  last_event_at: string | null
+export type MetricKey = "north_star" | "useful_supply" | "match" | "habit"
+
+export type MonthBlock = {
+  start: string
+  end: string
+  /** false mientras el mes sigue corriendo. */
+  closed: boolean
+  /** Hasta dónde alcanzan los datos: fin de mes, o "ahora" si sigue abierto. */
   as_of: string
   north_star: MetricBlock
   useful_supply: MetricBlock
   match: MetricBlock
   habit: MetricBlock
+  /** Volumen de publicaciones del bucket; kind "count", sin denominador. */
+  events_created: MetricBlock
 }
+
+/** Una persona en el feed en vivo. `at` es el check-in o la inscripción. */
+export type FeedEntry = {
+  name: string
+  email: string
+  event: string
+  location: string | null
+  event_at: string | null
+  at: string | null
+}
+
+/** Un evento que está ocurriendo ahora mismo. */
+export type ActiveEvent = {
+  id: string
+  title: string
+  location: string | null
+  starts_at: string | null
+  ends_at: string | null
+}
+
+export type LiveFeed = {
+  /** Vacío = no hay nada en curso; el panel no está realmente "en vivo". */
+  active_events: ActiveEvent[]
+  check_ins: FeedEntry[]
+  pending: FeedEntry[]
+}
+
+export type Granularity = "week" | "month"
 
 export type MetricsResponse = {
   timezone: string
-  granularity: "week" | "month" | "year"
+  granularity: Granularity
   periods: number
-  lifetime: LifetimeBlock
+  as_of: string
+  totals: { events: number; signups: number }
+  live: LiveFeed
+  headline: { current: MonthBlock; previous: MonthBlock | null }
   north_star: MetricBlock
   useful_supply: MetricBlock
   match: MetricBlock
   habit: MetricBlock
+  events_created: MetricBlock
 }
 
 export function getToken() {
@@ -76,7 +128,7 @@ export function fetchMe() {
   return request<{ email: string; full_name: string | null; role: string }>("/auth/me")
 }
 
-export function fetchMetrics(granularity: string, periods: number) {
+export function fetchMetrics(granularity: Granularity, periods: number) {
   const q = new URLSearchParams({ granularity, periods: String(periods) })
   return request<MetricsResponse>(`/metrics?${q}`)
 }

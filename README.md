@@ -1,8 +1,35 @@
 # Utopp Metrics
 
-Panel admin de la métrica estrella norte (asistencia verificada / inscripciones) y tres métricas de apoyo, todas como porcentaje.
+Panel admin de la métrica estrella norte (asistencia verificada / inscripciones) y tres métricas de apoyo, todas como porcentaje y **todas mensuales**.
+
+La estrella norte pertenece al mes del evento: cada evento aporta sus inscritos y sus asistentes al mes en que ocurre, así que un evento de octubre no altera la cifra de septiembre. El mes en curso se actualiza en vivo y arranca de cero el día 1.
 
 Definiciones: [METRICS.md](./METRICS.md).
+
+## Panel
+
+Tema oscuro con **sidebar de administrador** pegado al borde izquierdo, a lo alto de la ventana; el contenido se centra en el espacio restante.
+
+En escritorio funciona como rail: 68 px de solo iconos, que se abre a 260 px **al pasar el cursor** (o al recibir foco de teclado) montándose sobre el contenido, sin moverlo. El chevrón del encabezado lo **fija abierto**; ahí sí empuja el contenido, para que nada quede tapado de forma permanente. El estado fijado se guarda en `localStorage`.
+
+La navegación agrupa en `Principal` (Resumen), `Métricas` — un ítem por métrica, cada uno mostrando su cifra del mes — y `Otro` (glosario). Abajo, el usuario y cerrar sesión.
+
+La vista vive en el hash (`#/resumen`, `#/north_star`, `#/useful_supply`, `#/match`, `#/habit`, `#/glossary`), así que se puede compartir el link de una métrica y recargar sin perder el sitio. Bajo 1100 px el rail desaparece y el sidebar pasa a cajón con botón de menú y scrim.
+
+`Resumen` apila las cuatro secciones; cada ítem de `Métricas` muestra esa sola, en tamaño grande.
+
+Una sección por métrica. Cada sección trae la cifra del mes en curso, el delta en puntos porcentuales contra el mes cerrado, el desglose numerador / denominador y dos gráficas (Chart.js):
+
+- **Cómo se armó el mes** — línea del acumulado diario; su último punto es la cifra grande.
+- **Histórico** — barras de numerador y denominador más la línea de la tasa, en ventanas de semana o mes.
+
+Van una debajo de otra, cada una en su tarjeta: lado a lado quedaban demasiado estrechas y sus ejes competían.
+
+`Resumen` abre con una fila de dos columnas por encima de las métricas: **Eventos creados** (volumen — conteo, no tasa, con la barra del periodo en curso destacada) y, a la derecha, **Quién se está sumando**, el feed en vivo. Las dos listas —últimos check-in y últimos pendientes— comparten un solo espacio y se alternan con un selector: apiladas, el panel crecía hasta el doble que la columna de al lado. Cada fila lleva solo nombre, correo, estado y hace cuánto; el evento y el aula van en el `title`.
+
+El indicador **En vivo** de la cabecera se enciende únicamente cuando hay algún evento ocurriendo en ese momento; si no, el punto queda apagado y dice "Nada en curso".
+
+Código de color constante en las cuatro secciones: **azul** = denominador, **naranja** = numerador, **turquesa** = la tasa. Responsive de 390 px en adelante; el panel repregunta al API cada 30 s.
 
 ## Local
 

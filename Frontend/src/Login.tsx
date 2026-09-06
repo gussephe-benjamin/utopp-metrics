@@ -25,8 +25,8 @@ export function Login({ onDone }: { onDone: () => void }) {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <p className="brand">UTOPP METRICS</p>
-        <h1>Panel admin</h1>
+        <div className="eyebrow">Utopp · Panel de métricas</div>
+        <h1>Pulso de Asistencia</h1>
         <p className="muted">Estrella norte y métricas de apoyo. Solo administrador o root.</p>
         <form onSubmit={onSubmit}>
           <input
