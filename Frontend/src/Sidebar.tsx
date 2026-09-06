@@ -5,6 +5,7 @@ export type View = "resumen" | MetricKey | "glossary"
 type IconName =
   | "grid" | "star" | "layers" | "target" | "repeat" | "book"
   | "logout" | "menu" | "close" | "pin" | "unpin"
+  | "eye" | "eye-off"
 
 const PATHS: Record<IconName, string> = {
   grid: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
@@ -19,6 +20,9 @@ const PATHS: Record<IconName, string> = {
   // Chevrones: « fija abierto, » lo suelta.
   pin: "M13 17l-5-5 5-5M20 17l-5-5 5-5",
   unpin: "M11 7l5 5-5 5M4 7l5 5-5 5",
+  // Mostrar/ocultar la contraseña en el acceso.
+  eye: "M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12zM12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z",
+  "eye-off": "M3 3l18 18M10.6 6.1A9.9 9.9 0 0112 6c6.4 0 10 6 10 6a17.3 17.3 0 01-3.3 3.9M6.3 8.1A17.3 17.3 0 002 12s3.6 6.5 10 6.5c1.2 0 2.3-.2 3.2-.5M9.9 9.9a2.5 2.5 0 003.5 3.5",
 }
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {

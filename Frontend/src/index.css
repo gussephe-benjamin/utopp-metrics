@@ -427,31 +427,128 @@ footer {
 .muted { color: var(--text-secondary); font-size: 13px; }
 .loading { color: var(--text-tertiary); padding: 60px 0; text-align: center; }
 
-/* ---------- LOGIN ---------- */
-.login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+/* ---------- LOGIN ----------
+   Es la primera pantalla del producto y era la única sin su identidad: un
+   rectángulo con dos campos sin etiqueta. Ahora lleva el mismo isotipo y el
+   mismo bloque de marca que el sidebar, y el trazo del electrocardiograma se
+   dibuja una vez al entrar. Ese es el único momento con animación: el resto
+   se sostiene con jerarquía y espacio. */
+.login-wrap {
+  min-height: 100vh; display: grid; place-items: center; padding: 24px;
+  /* Luz ambiente, no una sombra de color: el mismo recurso de radiales que ya
+     usa el `body`, centrado detrás de la tarjeta. */
+  background: radial-gradient(620px 340px at 50% 42%, rgba(82, 227, 194, 0.06), transparent 70%);
+}
 .login-card {
-  width: 100%; max-width: 380px; padding: 28px;
-  background: var(--panel); border: 1px solid var(--panel-border-soft);
+  width: 100%; max-width: 400px; padding: 30px 28px 28px;
+  background: var(--panel); border: 1px solid var(--panel-border);
   border-radius: var(--radius-lg);
+  /* Con desplazamiento y desenfoque: una tarjeta a esta altura proyecta abajo.
+     El halo sin desplazamiento sería decoración, no profundidad. */
+  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.3);
 }
-.login-card .eyebrow {
-  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--pulse); font-weight: 700;
+
+/* Bloque de marca, calcado del sidebar para que sea el mismo producto. */
+.login-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+.login-brand-text { display: flex; flex-direction: column; min-width: 0; }
+/* En el sidebar este subtítulo convive con iconos y grupos; aquí es una de las
+   cuatro líneas de la pantalla, y `--text-tertiary` sobre el panel se queda en
+   2,9:1. Con el secundario sube a 5,9:1 sin cambiar la clase compartida. */
+.login-brand .sb-sub { color: var(--text-secondary); }
+.login-mark { width: 44px; height: 44px; border-radius: 12px; }
+.login-mark svg { width: 24px; height: 24px; }
+.login-mark path {
+  /* 42 es el largo aproximado del trazo; con un poco de holgura basta para
+     que arranque oculto y se dibuje entero. */
+  stroke-dasharray: 44;
+  animation: login-trace 1s cubic-bezier(0.22, 0.68, 0, 1) both;
 }
-.login-card h1 { margin: 6px 0 8px; font-size: 22px; }
-.login-card form { display: grid; gap: 10px; margin-top: 18px; }
+@keyframes login-trace {
+  from { stroke-dashoffset: 44; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.login-card h1 {
+  font-family: "Space Grotesk", Inter, sans-serif;
+  margin: 0 0 8px; font-size: 27px; line-height: 1.15;
+  letter-spacing: -0.02em; font-weight: 700;
+}
+.login-lede { margin: 0; max-width: 34ch; line-height: 1.55; }
+
+.login-card form { display: grid; gap: 16px; margin-top: 26px; }
+.field { display: grid; gap: 7px; }
+.field label {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.01em;
+  color: var(--text-secondary);
+}
+/* El campo se envuelve para poder alojar el botón de ver la contraseña. */
+.field-control { position: relative; display: grid; }
+
 .login-card input {
-  padding: 11px 14px; border-radius: var(--radius-sm);
+  /* 44 px de alto: es el mínimo cómodo para un pulgar. */
+  padding: 12px 14px; min-height: 44px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--panel-border); background: var(--panel-2);
   color: var(--text-primary);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
-.login-card input::placeholder { color: var(--text-tertiary); }
-.login-card input:focus { outline: none; border-color: var(--registro); }
-.login-card button {
-  padding: 11px 14px; border-radius: var(--radius-sm); border: 0;
+.field-control input { padding-right: 46px; }
+.login-card input:hover { border-color: #2c3850; }
+.login-card input:focus-visible,
+.login-card input:focus {
+  outline: none;
+  border-color: var(--registro);
+  box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.22);
+  background: #0d1420;
+}
+.login-card input:autofill,
+.login-card input:-webkit-autofill {
+  /* Chrome pinta el autorrelleno de azul claro y rompe el tema oscuro. El
+     relleno interior es la única forma de recuperar el fondo del campo. */
+  -webkit-text-fill-color: var(--text-primary);
+  -webkit-box-shadow: 0 0 0 100px var(--panel-2) inset;
+  caret-color: var(--pulse);
+}
+
+.field-toggle {
+  position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; padding: 0;
+  background: none; border: 0; border-radius: var(--radius-sm);
+  color: var(--text-tertiary); cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.field-toggle:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+.field-toggle:focus-visible {
+  outline: 2px solid var(--registro); outline-offset: 1px; color: var(--text-primary);
+}
+
+.login-error { margin: 0; }
+
+.login-submit {
+  margin-top: 4px;
+  padding: 12px 14px; min-height: 44px;
+  border-radius: var(--radius-sm); border: 0;
   background: var(--pulse); color: #08221b; font-weight: 700; cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.06s ease;
 }
-.login-card button:disabled { opacity: 0.6; cursor: default; }
+.login-submit:hover:not(:disabled) {
+  filter: brightness(1.07);
+  box-shadow: 0 8px 22px -10px var(--pulse-glow);
+}
+.login-submit:active:not(:disabled) { transform: translateY(1px); }
+.login-submit:focus-visible {
+  outline: 2px solid var(--pulse); outline-offset: 3px;
+}
+.login-submit:disabled {
+  /* Apagado por color, no por opacidad: al 0.6 el texto perdía contraste y
+     el botón quedaba ilegible mientras se entra. */
+  background: #2f6a5d; color: #cfeae3; cursor: default;
+}
+
+/* Superficies del navegador: el cursor y la selección también son del tema. */
+.login-wrap { caret-color: var(--pulse); }
+.login-card ::selection { background: rgba(82, 227, 194, 0.28); color: var(--text-primary); }
 
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 1240px) {
@@ -488,4 +585,7 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .live-dot { animation: none; }
   .sidebar, .content { transition: none; }
+  /* El trazo aparece dibujado, sin recorrerse. */
+  .login-mark path { animation: none; stroke-dasharray: none; }
+  .login-card input, .field-toggle, .login-submit { transition: none; }
 }
