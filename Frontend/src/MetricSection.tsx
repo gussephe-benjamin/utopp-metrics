@@ -1,6 +1,7 @@
 import type { ChartConfiguration } from "chart.js"
 import { Chart, COLORS, areaFill, reduceMotion, tooltipStyle } from "./Chart"
 import type { Granularity, MetricBlock } from "./api"
+import { Icon } from "./Sidebar"
 
 const LIMA = "America/Lima"
 const int = new Intl.NumberFormat("es-PE")
@@ -38,12 +39,12 @@ function DeltaChip({ points, caption }: { points: number | null; caption: string
   }
   const flat = Math.abs(points) < 0.05
   const cls = flat ? "delta-flat" : points > 0 ? "delta-up" : "delta-down"
-  const arrow = flat ? "＝" : points > 0 ? "▲" : "▼"
+  const icono = flat ? "trend-flat" : points > 0 ? "trend-up" : "trend-down"
   const text = flat ? "sin cambio" : `${Math.abs(points).toFixed(1)} pp`
   return (
     <>
       <div className={`delta-chip ${cls}`}>
-        {arrow} {text}
+        <Icon name={icono} size={14} /> {text}
       </div>
       <div className="delta-caption">{caption}</div>
     </>
@@ -241,6 +242,8 @@ export function MetricSection({
   monthLabel,
   footnote,
   starred = false,
+  compact = false,
+  onOpen,
 }: {
   eyebrow: string
   name: string
@@ -254,6 +257,9 @@ export function MetricSection({
   granularity: Granularity
   monthLabel: string
   footnote: string
+  /** Resumen en teléfono: solo la cifra. Las gráficas viven en su sección. */
+  compact?: boolean
+  onOpen?: () => void
   starred?: boolean
 }) {
   if (!current.available) {
@@ -321,6 +327,16 @@ export function MetricSection({
         </div>
       </div>
 
+      {compact ? (
+        /* En un teléfono, Resumen apilaba las cuatro métricas con sus dos
+           gráficas cada una: 4.800 px de scroll para leer cuatro cifras. Aquí
+           se queda la cifra, y las gráficas siguen enteras en la sección de
+           esa métrica, que es a donde lleva este botón. */
+        <button type="button" className="metric-open" onClick={onOpen}>
+          Ver gráficas de {name.toLowerCase()}
+          <Icon name="chevron-right" size={16} />
+        </button>
+      ) : (
       <div className="chart-grid">
         <div className="chart-block">
           <div className="chart-head">
@@ -349,8 +365,9 @@ export function MetricSection({
           )}
         </div>
       </div>
+      )}
 
-      <p className="foot-note">{footnote}</p>
+      {compact ? null : <p className="foot-note">{footnote}</p>}
     </section>
   )
 }

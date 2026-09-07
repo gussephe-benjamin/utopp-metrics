@@ -91,6 +91,23 @@ function viewFromHash(): View {
   return (VIEWS as string[]).includes(raw) ? (raw as View) : "resumen"
 }
 
+/** ¿Estamos en un teléfono? Resumen cambia de forma, no solo de tamaño, así que
+ *  la decisión no puede vivir solo en CSS: las gráficas que no se ven tampoco
+ *  deben construirse. 760 px deja fuera a la tablet, que sí tiene sitio. */
+function useIsPhone() {
+  const consulta = "(max-width: 760px)"
+  const [esTelefono, setEsTelefono] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(consulta).matches
+  )
+  useEffect(() => {
+    const mq = window.matchMedia(consulta)
+    const alCambiar = () => setEsTelefono(mq.matches)
+    mq.addEventListener("change", alCambiar)
+    return () => mq.removeEventListener("change", alCambiar)
+  }, [])
+  return esTelefono
+}
+
 export default function App() {
   const [ready, setReady] = useState(false)
   const [authed, setAuthed] = useState(false)
@@ -100,6 +117,7 @@ export default function App() {
   const [data, setData] = useState<MetricsResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [refreshedAt, setRefreshedAt] = useState<Date | null>(null)
+  const esTelefono = useIsPhone()
   const [view, setView] = useState<View>(viewFromHash)
   const [menuOpen, setMenuOpen] = useState(false)
   const [pinned, setPinned] = useState(() => localStorage.getItem(PIN_KEY) === "1")
@@ -381,6 +399,8 @@ export default function App() {
                     monthLabel={monthLabel}
                     footnote={m.footnote}
                     starred={view !== "resumen" || m.key === "north_star"}
+                    compact={esTelefono && view === "resumen"}
+                    onOpen={() => go(m.key)}
                   />
                   ))}
                 </>

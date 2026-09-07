@@ -1,6 +1,7 @@
 import type { ChartConfiguration } from "chart.js"
 import { Chart, COLORS, reduceMotion, tooltipStyle } from "./Chart"
 import type { Granularity, MetricBlock } from "./api"
+import { Icon } from "./Sidebar"
 
 const LIMA = "America/Lima"
 const int = new Intl.NumberFormat("es-PE")
@@ -87,7 +88,7 @@ export function VolumePanel({
   const diff = prev == null ? null : value - prev
   const flat = diff != null && Math.abs(diff) < 1
   const cls = diff == null || flat ? "delta-flat" : diff > 0 ? "delta-up" : "delta-down"
-  const arrow = diff == null ? "" : flat ? "＝" : diff > 0 ? "▲" : "▼"
+  const icono = diff == null ? null : flat ? "trend-flat" : diff > 0 ? "trend-up" : "trend-down"
   const chipText =
     diff == null
       ? "Sin mes previo"
@@ -109,7 +110,7 @@ export function VolumePanel({
         <div className="volume-value">{int.format(Math.round(value))}</div>
         <div className="readout-side">
           <div className={`delta-chip ${cls}`}>
-            {arrow} {chipText}
+            {icono ? <Icon name={icono} size={14} /> : null} {chipText}
           </div>
           <div className="delta-caption">
             {previousLabel
