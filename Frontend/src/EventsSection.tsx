@@ -7,6 +7,7 @@ import {
   type EventRow,
   type EventStatus,
 } from "./api"
+import { buildCsv, downloadCsv, slug } from "./csv"
 import { Icon } from "./Sidebar"
 
 /**
@@ -35,6 +36,11 @@ const hora = new Intl.DateTimeFormat("es-PE", {
   hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Lima",
 })
 const entero = new Intl.NumberFormat("es-PE")
+/** Para el CSV: en una hoja de cálculo una hora suelta no dice de qué día es. */
+const fechaHora = new Intl.DateTimeFormat("es-PE", {
+  day: "2-digit", month: "2-digit", year: "numeric",
+  hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Lima",
+})
 
 function cuando(iso: string | null) {
   if (!iso) return "Sin fecha"
@@ -162,7 +168,7 @@ function ListaEventos({ onOpen }: { onOpen: (id: string) => void }) {
 
 /* --------------------------------------------------------------- detalle --- */
 
-function Inscritos({ gente }: { gente: EventAttendee[] }) {
+function Inscritos({ gente, evento }: { gente: EventAttendee[]; evento: EventRow }) {
   const [q, setQ] = useState("")
   const [filtro, setFiltro] = useState<"todos" | "entraron" | "faltan">("todos")
 
@@ -175,6 +181,27 @@ function Inscritos({ gente }: { gente: EventAttendee[] }) {
       return p.full_name.toLowerCase().includes(texto) || p.email.toLowerCase().includes(texto)
     })
   }, [gente, q, filtro])
+
+  function descargar() {
+    // Se exporta lo que se está viendo, no todo: si alguien filtró por «Faltan»
+    // es porque quiere esa lista. El número va en el botón para que no haya
+    // duda de cuántas filas salen.
+    const filas = visibles.map((p) => [
+      p.full_name,
+      p.email,
+      p.registered_at ? fechaHora.format(new Date(p.registered_at)) : "",
+      p.checked_in ? "Sí" : "No",
+      p.checked_in_at ? fechaHora.format(new Date(p.checked_in_at)) : "",
+      evento.title,
+      evento.starts_at ? fechaHora.format(new Date(evento.starts_at)) : "",
+    ])
+    const csv = buildCsv(
+      ["Nombre", "Correo", "Se inscribió", "Entró", "Hora de entrada", "Evento", "Fecha del evento"],
+      filas
+    )
+    const hoy = new Date().toISOString().slice(0, 10)
+    downloadCsv(`inscritos-${slug(evento.title)}-${hoy}.csv`, csv)
+  }
 
   return (
     <div className="ev-people">
@@ -200,6 +227,17 @@ function Inscritos({ gente }: { gente: EventAttendee[] }) {
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          className="ev-export"
+          onClick={descargar}
+          disabled={visibles.length === 0}
+          title="Descarga un CSV que Excel y Google Sheets abren directamente"
+        >
+          <Icon name="download" size={16} />
+          Descargar {visibles.length === gente.length ? "" : "lo filtrado "}
+          ({entero.format(visibles.length)})
+        </button>
       </div>
 
       {visibles.length === 0 ? (
@@ -313,7 +351,7 @@ function DetalleEvento({ id, onBack }: { id: string; onBack: () => void }) {
       <div className="ev-people-head">
         Inscritos ({entero.format(datos.attendees.length)})
       </div>
-      <Inscritos gente={datos.attendees} />
+      <Inscritos gente={datos.attendees} evento={e} />
     </section>
   )
 }

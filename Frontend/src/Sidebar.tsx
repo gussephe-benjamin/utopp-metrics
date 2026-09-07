@@ -7,7 +7,7 @@ type IconName =
   | "logout" | "menu" | "close" | "pin" | "unpin"
   | "eye" | "eye-off"
   | "trend-up" | "trend-down" | "trend-flat" | "chevron-right"
-  | "calendar" | "arrow-left" | "external"
+  | "calendar" | "arrow-left" | "external" | "download"
 
 const PATHS: Record<IconName, string> = {
   grid: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
@@ -36,6 +36,7 @@ const PATHS: Record<IconName, string> = {
   calendar: "M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z",
   "arrow-left": "M19 12H5M11 18l-6-6 6-6",
   external: "M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5",
+  download: "M12 3v12M7 11l5 5 5-5M4 19h16",
 }
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {

@@ -758,6 +758,21 @@ footer {
 }
 .ev-guest-state { flex-shrink: 0; }
 
+.ev-export {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 11px 14px;
+  background: var(--panel-2); border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.ev-export:hover:not(:disabled) { color: var(--pulse); border-color: rgba(82, 227, 194, 0.35); }
+.ev-export:focus-visible { outline: 2px solid var(--pulse); outline-offset: 2px; }
+.ev-export:disabled {
+  /* Apagado por color, no por opacidad: al 0.5 el rótulo deja de leerse. */
+  color: var(--text-tertiary); border-color: var(--panel-border-soft); cursor: default;
+}
+
 /* `.section-title h2` va en versalitas porque nombra una métrica. El título de
    un evento es un nombre propio: en mayúsculas y largo, cuesta más de leer. */
 .section-title h2.ev-detail-title {
