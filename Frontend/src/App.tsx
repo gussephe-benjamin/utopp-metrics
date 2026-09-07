@@ -92,16 +92,14 @@ function viewFromHash(): View {
   return (VIEWS as string[]).includes(raw) ? (raw as View) : "resumen"
 }
 
-/** El id que sigue a `#/eventos/`. Va en el hash y no en el estado para que
- *  recargar —o compartir el enlace— caiga en el mismo evento. */
+/** El id va en el hash para que recargar o compartir caiga en el mismo evento. */
 function eventIdFromHash(): string | null {
   const partes = window.location.hash.replace(/^#\/?/, "").split("/")
   return partes[0] === "eventos" && partes[1] ? partes[1] : null
 }
 
-/** ¿Estamos en un teléfono? Resumen cambia de forma, no solo de tamaño, así que
- *  la decisión no puede vivir solo en CSS: las gráficas que no se ven tampoco
- *  deben construirse. 760 px deja fuera a la tablet, que sí tiene sitio. */
+/** En teléfono Resumen cambia de forma, no solo de tamaño: las gráficas que no
+ *  se ven tampoco deben construirse, y eso no lo decide el CSS. */
 function useIsPhone() {
   const consulta = "(max-width: 760px)"
   const [esTelefono, setEsTelefono] = useState(

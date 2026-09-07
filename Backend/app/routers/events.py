@@ -18,8 +18,7 @@ def get_events(
     _: AdminUser = Depends(require_admin),
 ):
     """Todos los eventos con sus inscritos y sus check-ins."""
-    # Igual que las métricas: un evento en curso cambia de cifra cada minuto y
-    # ningún intermediario debe servir una vieja.
+    # Un evento en curso cambia de cifra cada minuto.
     response.headers["Cache-Control"] = "no-store"
     return list_events(db, limit=limit, public_base_url=settings.FORMULARIO_PUBLIC_URL)
 
@@ -36,8 +35,7 @@ def get_event_attendees(
     try:
         datos = event_attendees(db, event_id, public_base_url=settings.FORMULARIO_PUBLIC_URL)
     except Exception:
-        # Un id que no es UUID hace fallar el CAST en Postgres. Es una petición
-        # mal formada, no un fallo del servidor.
+        # Un id que no es UUID revienta el CAST: es petición mal formada, no un 500.
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evento no encontrado")
     if datos is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evento no encontrado")

@@ -10,15 +10,6 @@ import {
 import { buildCsv, downloadCsv, slug } from "./csv"
 import { Icon } from "./Sidebar"
 
-/**
- * El catálogo de eventos: la lista y, al abrir uno, sus cifras y sus inscritos.
- *
- * Las cuatro métricas responden «cómo va todo». Esto responde «¿y este evento?»,
- * que es lo que se pregunta quien está en la puerta mientras la gente entra. Por
- * eso el detalle refresca solo cada 20 s: un evento en curso cambia de cifra
- * mientras lo miras, y un número quieto mentiría.
- */
-
 const ESTADOS: Record<EventStatus, { texto: string; cls: string }> = {
   en_curso: { texto: "En curso", cls: "ev-live" },
   proximo: { texto: "Próximo", cls: "ev-soon" },
@@ -36,7 +27,7 @@ const hora = new Intl.DateTimeFormat("es-PE", {
   hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/Lima",
 })
 const entero = new Intl.NumberFormat("es-PE")
-/** Para el CSV: en una hoja de cálculo una hora suelta no dice de qué día es. */
+/** El CSV necesita el día: una hora suelta no dice nada en una hoja. */
 const fechaHora = new Intl.DateTimeFormat("es-PE", {
   day: "2-digit", month: "2-digit", year: "numeric",
   hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Lima",
@@ -183,9 +174,7 @@ function Inscritos({ gente, evento }: { gente: EventAttendee[]; evento: EventRow
   }, [gente, q, filtro])
 
   function descargar() {
-    // Se exporta lo que se está viendo, no todo: si alguien filtró por «Faltan»
-    // es porque quiere esa lista. El número va en el botón para que no haya
-    // duda de cuántas filas salen.
+    // Exporta lo visible, no todo: quien filtró por «Faltan» quiere esa lista.
     const filas = visibles.map((p) => [
       p.full_name,
       p.email,
@@ -245,8 +234,7 @@ function Inscritos({ gente, evento }: { gente: EventAttendee[]; evento: EventRow
           {q.trim() ? `Nadie coincide con «${q.trim()}».` : "Nadie en este estado todavía."}
         </p>
       ) : (
-        /* Lista y no tabla: en un teléfono una tabla de cuatro columnas obliga a
-           desplazar en horizontal, que es justo lo que no se puede hacer aquí. */
+        /* Lista y no tabla: cuatro columnas en un teléfono obligan a desplazar. */
         <ul className="ev-guests">
           {visibles.map((p) => (
             <li key={p.id} className={p.checked_in ? "is-in" : ""}>
@@ -327,11 +315,7 @@ function DetalleEvento({ id, onBack }: { id: string; onBack: () => void }) {
         </div>
         <div className="ev-stat">
           <div className="ev-stat-n" style={{ color: "#f2a65c" }}>{entero.format(e.check_ins)}</div>
-          <div className="ev-stat-l">
-            {/* En curso la cifra se mueve sola; decirlo evita que alguien la
-                lea como definitiva y cierre la puerta antes de tiempo. */}
-            {enCurso ? "Entraron · en vivo" : "Entraron"}
-          </div>
+          <div className="ev-stat-l">{enCurso ? "Entraron · en vivo" : "Entraron"}</div>
         </div>
         <div className="ev-stat">
           <div className="ev-stat-n ev-stat-rate">

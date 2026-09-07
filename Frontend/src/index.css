@@ -292,7 +292,14 @@ button, input, select { font: inherit; }
 .delta-flat { background: rgba(140, 150, 170, 0.14); color: var(--text-secondary); }
 .delta-caption { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.4; }
 
-.breakdown { display: flex; gap: 22px; margin-left: auto; padding-bottom: 8px; }
+.breakdown {
+  display: flex; gap: 26px; padding-bottom: 8px;
+  /* Sin `margin-left: auto`: pegado al borde derecho, el desglose quedaba a
+     700 px de la cifra que explica. */
+  margin-left: 8px; padding-left: 26px;
+  border-left: 1px solid var(--panel-border-soft);
+}
+.bd-item { text-align: left; }
 .bd-item { text-align: right; }
 .bd-item .n {
   font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -311,10 +318,11 @@ button, input, select { font: inherit; }
 .chart-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 18px; }
 .chart-block {
   min-width: 0;
-  background: var(--panel-2);
-  border: 1px solid var(--panel-border-soft);
-  border-radius: var(--radius-md);
-  padding: 14px 16px 12px;
+  /* Sin marco propio: un panel con borde dentro de otro panel con borde lee
+     como tarjeta anidada. Basta una línea para separar la gráfica del bloque
+     de cifras. */
+  padding: 16px 0 0;
+  border-top: 1px solid var(--panel-border-soft);
 }
 .chart-head {
   display: flex; align-items: center; justify-content: space-between;
@@ -339,8 +347,7 @@ button, input, select { font: inherit; }
 }
 .foot-note { margin-top: 12px; font-size: 11.5px; color: var(--text-tertiary); line-height: 1.55; }
 
-/* Puerta desde la tarjeta compacta del Resumen a la sección de esa métrica.
-   Solo aparece en teléfono; en pantallas anchas las gráficas ya están ahí. */
+/* Resumen compacto (teléfono): lleva a la sección con las gráficas. */
 .metric-open {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   width: 100%; margin-top: 16px; min-height: 44px; padding: 11px 14px;
@@ -449,53 +456,36 @@ footer {
    dibuja una vez al entrar. Ese es el único momento con animación: el resto
    se sostiene con jerarquía y espacio. */
 .login-wrap {
-  /* `svh` antes que `vh`: en el móvil la barra del navegador entra y sale, y
-     con `100vh` la tarjeta se va fuera de cuadro al aparecer. `vh` queda de
-     reserva para quien no entienda las unidades dinámicas. */
+  /* `vh` de reserva; `svh` evita que la barra del navegador móvil la eche fuera. */
   min-height: 100vh;
   min-height: 100svh;
   display: grid;
-  /* Una columna que nunca supera el ancho disponible. Con `place-items: center`
-     la columna se ajustaba al contenido en vez de al hueco, y en un teléfono de
-     320 px la tarjeta desbordaba: 58 px de scroll lateral. */
+  /* `place-items: center` ajustaba la columna al contenido: desbordaba a 320 px. */
   grid-template-columns: minmax(0, 400px);
   justify-content: center;
   align-content: center;
-  /* El relleno respeta muescas y barra de gestos; en escritorio `env()` vale 0
-     y gana el mínimo. */
   padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right))
            max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
-  /* Luz ambiente, no una sombra de color: el mismo recurso de radiales que ya
-     usa el `body`, centrado detrás de la tarjeta. */
   background: radial-gradient(620px 340px at 50% 42%, rgba(82, 227, 194, 0.06), transparent 70%);
 }
 .login-card {
   width: 100%; padding: 30px 28px 28px;
   background: var(--panel); border: 1px solid var(--panel-border);
   border-radius: var(--radius-lg);
-  /* Con desplazamiento y desenfoque: una tarjeta a esta altura proyecta abajo.
-     El halo sin desplazamiento sería decoración, no profundidad. */
   box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
-/* Bloque de marca, calcado del sidebar para que sea el mismo producto. */
 .login-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
 .login-brand-text { display: flex; flex-direction: column; min-width: 0; }
-/* En el sidebar este subtítulo convive con iconos y grupos; aquí es una de las
-   cuatro líneas de la pantalla, y `--text-tertiary` sobre el panel se queda en
-   2,9:1. Con el secundario sube a 5,9:1 sin cambiar la clase compartida. */
+/* `--text-tertiary` aquí se queda en 2,9:1; el secundario sube a 5,9:1. */
 .login-brand .sb-sub { color: var(--text-secondary); }
-/* El `nowrap` existe para que el rail no parta los rótulos mientras se colapsa.
-   Aquí no hay rail, y ese `nowrap` era lo que empujaba la tarjeta más allá del
-   ancho de un teléfono estrecho. */
+/* El `nowrap` del rail empujaba la tarjeta fuera del ancho de un teléfono. */
 .login-brand .sb-name,
 .login-brand .sb-sub { white-space: normal; }
 .login-mark { width: 44px; height: 44px; border-radius: 12px; }
 .login-mark svg { width: 24px; height: 24px; }
 .login-mark path {
-  /* 42 es el largo aproximado del trazo; con un poco de holgura basta para
-     que arranque oculto y se dibuje entero. */
-  stroke-dasharray: 44;
+  stroke-dasharray: 44; /* largo del trazo, con holgura */
   animation: login-trace 1s cubic-bezier(0.22, 0.68, 0, 1) both;
 }
 @keyframes login-trace {
@@ -511,19 +501,16 @@ footer {
 .login-lede { margin: 0; max-width: 34ch; line-height: 1.55; }
 
 .login-card form { display: grid; gap: 16px; margin-top: 26px; }
-/* `min-width: 0` no es adorno: un ítem de rejilla no baja de su ancho
-   intrínseco, y el de un `<input>` lo fija su atributo `size` —unos 266 px—.
-   Sin esto los campos se salían 16 px del formulario en un teléfono de 320. */
+/* Sin `min-width: 0` el campo se queda en su ancho intrínseco (el `size` del
+   input, ~266 px) y se sale del formulario en un teléfono estrecho. */
 .field { display: grid; gap: 7px; min-width: 0; }
 .field label {
   font-size: 12px; font-weight: 600; letter-spacing: 0.01em;
   color: var(--text-secondary);
 }
-/* El campo se envuelve para poder alojar el botón de ver la contraseña. */
 .field-control { position: relative; display: grid; min-width: 0; }
 
 .login-card input {
-  /* 44 px de alto: es el mínimo cómodo para un pulgar. */
   padding: 12px 14px; min-height: 44px;
   width: 100%; min-width: 0;
   border-radius: var(--radius-sm);
@@ -542,8 +529,7 @@ footer {
 }
 .login-card input:autofill,
 .login-card input:-webkit-autofill {
-  /* Chrome pinta el autorrelleno de azul claro y rompe el tema oscuro. El
-     relleno interior es la única forma de recuperar el fondo del campo. */
+  /* Chrome pinta el autorrelleno de azul claro y rompe el tema oscuro. */
   -webkit-text-fill-color: var(--text-primary);
   -webkit-box-shadow: 0 0 0 100px var(--panel-2) inset;
   caret-color: var(--pulse);
@@ -552,9 +538,7 @@ footer {
 .field-toggle {
   position: absolute; top: 50%; right: 1px; transform: translateY(-50%);
   display: flex; align-items: center; justify-content: center;
-  /* 44 px reales, no 34: con el pulgar, un objetivo de 34 se falla. El icono
-     sigue midiendo 17, lo que crece es la zona que responde. */
-  width: 44px; height: 44px; padding: 0;
+  width: 44px; height: 44px; padding: 0; /* zona táctil, no el icono */
   background: none; border: 0; border-radius: var(--radius-sm);
   color: var(--text-tertiary); cursor: pointer;
   transition: color 0.15s ease, background-color 0.15s ease;
@@ -584,17 +568,14 @@ footer {
   outline: 2px solid var(--pulse); outline-offset: 3px;
 }
 .login-submit:disabled {
-  /* Apagado por color, no por opacidad: al 0.6 el texto perdía contraste y
-     el botón quedaba ilegible mientras se entra. */
+  /* Por color y no por opacidad: al 0.6 el texto dejaba de leerse. */
   background: #2f6a5d; color: #cfeae3; cursor: default;
 }
 
-/* Superficies del navegador: el cursor y la selección también son del tema. */
 .login-wrap { caret-color: var(--pulse); }
 .login-card ::selection { background: rgba(82, 227, 194, 0.28); color: var(--text-primary); }
 
-/* Tablet: sobra sitio, así que la tarjeta y el titular crecen un punto. Sin
-   esto la pantalla se lee como una de móvil estirada en el centro de un iPad. */
+/* Tablet: sin esto se lee como una pantalla de móvil estirada. */
 @media (min-width: 768px) {
   .login-wrap { grid-template-columns: minmax(0, 428px); }
   .login-card { padding: 34px 32px 32px; }
@@ -603,8 +584,7 @@ footer {
   .login-card form { margin-top: 28px; }
 }
 
-/* Teléfono estrecho (SE y compañía): el relleno se reduce para que al campo le
-   quede ancho de sobra en vez de justo. */
+/* Teléfono estrecho: menos relleno, más ancho para el campo. */
 @media (max-width: 380px) {
   .login-wrap {
     padding-left: max(14px, env(safe-area-inset-left));
@@ -616,8 +596,7 @@ footer {
   .login-mark svg { width: 22px; height: 22px; }
 }
 
-/* Ventana baja —un teléfono tumbado deja 390 px de alto y la tarjeta mide 451—:
-   se aprieta el ritmo vertical. No se toca ningún tamaño de toque. */
+/* Teléfono tumbado: 390 px de alto para una tarjeta de 451. */
 @media (max-height: 620px) and (orientation: landscape) {
   .login-wrap { padding-top: max(14px, env(safe-area-inset-top)); padding-bottom: max(14px, env(safe-area-inset-bottom)); }
   .login-card { padding: 22px 24px 24px; }
@@ -626,10 +605,7 @@ footer {
   .login-card form { margin-top: 18px; gap: 13px; }
 }
 
-/* Teléfono tumbado con ancho de sobra: apretar el alto no bastaba —seguían
-   faltando 24 px— y la salida no es esconder la descripción, sino usar el
-   espacio que sí hay. La tarjeta pasa a dos columnas: identidad a la
-   izquierda, formulario a la derecha. Nada se recorta y no hay que desplazar. */
+/* Apretar el alto no bastaba: con ancho de sobra, dos columnas. */
 @media (max-height: 620px) and (orientation: landscape) and (min-width: 680px) {
   .login-wrap { grid-template-columns: minmax(0, 680px); }
   .login-card {
@@ -644,10 +620,7 @@ footer {
 }
 
 
-/* ---------- EVENTOS ----------
-   El catálogo y el detalle de un evento. Respeta el código de color del panel:
-   azul los inscritos (denominador), naranja los que entraron (numerador),
-   turquesa la tasa. Pensado desde el teléfono: se usa de pie, en la puerta. */
+/* ---------- EVENTOS ---------- */
 .ev-controls { display: flex; flex-direction: column; gap: 10px; margin: 16px 0 4px; }
 .ev-search {
   width: 100%; min-width: 0; min-height: 44px; padding: 11px 14px;
@@ -769,12 +742,10 @@ footer {
 .ev-export:hover:not(:disabled) { color: var(--pulse); border-color: rgba(82, 227, 194, 0.35); }
 .ev-export:focus-visible { outline: 2px solid var(--pulse); outline-offset: 2px; }
 .ev-export:disabled {
-  /* Apagado por color, no por opacidad: al 0.5 el rótulo deja de leerse. */
   color: var(--text-tertiary); border-color: var(--panel-border-soft); cursor: default;
 }
 
-/* `.section-title h2` va en versalitas porque nombra una métrica. El título de
-   un evento es un nombre propio: en mayúsculas y largo, cuesta más de leer. */
+/* Sin versalitas: es un nombre propio, no el nombre de una métrica. */
 .section-title h2.ev-detail-title {
   font-family: "Space Grotesk", Inter, sans-serif;
   font-size: 19px; font-weight: 600; letter-spacing: -0.01em;
@@ -789,25 +760,18 @@ footer {
   .metric-value { font-size: 58px; }
   .metric-value.sm { font-size: 40px; }
 }
-/* En el cajón del móvil los ítems medían 38 px de alto: por debajo del mínimo
-   cómodo para un pulgar, y son el único modo de cambiar de sección. */
+/* Objetivos táctiles: en el cajón medían 38 px. */
 @media (max-width: 1100px) {
   .sb-item, .sb-logout { min-height: 44px; padding: 11px 10px; }
   .menu-btn { width: 44px; height: 44px; }
   .sb-close { width: 44px; height: 44px; padding: 0; align-items: center; justify-content: center; }
-  /* Semanal/Mensual y 4·6·8·12 se tocan constantemente: cambian lo que
-     significan todas las cifras de la pantalla. A 35 px se fallaban. */
   .tab-btn { min-height: 44px; }
-  /* Los selectores de periodo son cuadraditos de 38 px de ancho: alto bastaba,
-     ancho no. Con el pulgar hay que poder acertar el 6 sin darle al 8. */
   .tab-btn.narrow { min-width: 44px; }
 }
 
 @media (max-width: 640px) {
   .content-inner { padding: 16px 14px 40px; }
   .panel { padding: 16px 15px; border-radius: var(--radius-md); }
-  /* La cabecera se comía 195 px —casi un cuarto de la pantalla— antes de que
-     apareciera un solo dato. Se aprieta para que la cifra entre sin desplazar. */
   .topbar { gap: 8px; margin-bottom: 12px; }
   .page-head h1 { font-size: 18px; }
   .page-head .sub { font-size: 11.5px; }
@@ -821,7 +785,11 @@ footer {
      leyenda del delta queda estrujada contra el número. */
   .readout { flex-direction: column; align-items: stretch; gap: 12px; }
   .readout-side { padding-bottom: 0; }
-  .breakdown { margin-left: 0; width: 100%; justify-content: space-between; gap: 12px; padding-bottom: 0; }
+  /* Apilado no hay a qué separarse: fuera la línea y la sangría del escritorio. */
+  .breakdown {
+    margin-left: 0; padding-left: 0; border-left: 0;
+    width: 100%; justify-content: space-between; gap: 12px; padding-bottom: 0;
+  }
   .bd-item { text-align: left; }
   .bd-item .l { justify-content: flex-start; }
   .bd-item .n { font-size: 19px; }

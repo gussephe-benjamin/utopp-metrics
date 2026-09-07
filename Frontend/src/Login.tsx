@@ -18,10 +18,7 @@ export function Login({ onDone }: { onDone: () => void }) {
       setToken(res.access_token)
       onDone()
     } catch (err) {
-      // `fetch` lanza un TypeError cuando no hay red o el servidor no contesta,
-      // y su mensaje es "Failed to fetch": en inglés y sin decir qué hacer. El
-      // del servidor sí es útil —"Correo o contraseña incorrectos"—, así que
-      // ese se respeta tal cual llega.
+      // `fetch` lanza TypeError sin red: su "Failed to fetch" no sirve al usuario.
       setError(
         err instanceof TypeError
           ? "No se pudo contactar con el servidor. Revisa tu conexión e inténtalo de nuevo."
@@ -37,10 +34,6 @@ export function Login({ onDone }: { onDone: () => void }) {
   return (
     <div className="login-wrap">
       <main className="login-card">
-        {/* El mismo bloque de marca que el sidebar. El trazo del isotipo es un
-            electrocardiograma —justo lo que mide este panel—, y es lo único
-            que faltaba para que el acceso se reconozca como parte del producto
-            en vez de como un formulario suelto. */}
         <div className="login-brand">
           <span className="brand-mark login-mark">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -74,8 +67,6 @@ export function Login({ onDone }: { onDone: () => void }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="username"
-              /* Teclado de correo y sin mayúscula automática: en el móvil,
-                 escribir la dirección no debería costar correcciones. */
               inputMode="email"
               autoCapitalize="none"
               autoCorrect="off"
@@ -112,9 +103,6 @@ export function Login({ onDone }: { onDone: () => void }) {
             </div>
           </div>
 
-          {/* `role="alert"` para que un lector de pantalla lo anuncie: antes el
-              fallo aparecía en silencio y quien no mira la pantalla reintentaba
-              a ciegas. */}
           {error ? (
             <p className="error login-error" id="login-error" role="alert">
               {error}

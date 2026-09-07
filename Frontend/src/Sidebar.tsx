@@ -22,13 +22,9 @@ const PATHS: Record<IconName, string> = {
   // Chevrones: « fija abierto, » lo suelta.
   pin: "M13 17l-5-5 5-5M20 17l-5-5 5-5",
   unpin: "M11 7l5 5-5 5M4 7l5 5-5 5",
-  // Mostrar/ocultar la contraseña en el acceso.
   eye: "M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12zM12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z",
   "eye-off": "M3 3l18 18M10.6 6.1A9.9 9.9 0 0112 6c6.4 0 10 6 10 6a17.3 17.3 0 01-3.3 3.9M6.3 8.1A17.3 17.3 0 002 12s3.6 6.5 10 6.5c1.2 0 2.3-.2 3.2-.5M9.9 9.9a2.5 2.5 0 003.5 3.5",
-  // Variación de una métrica. Antes eran los glifos ▲ ▼ ＝: el tercero es
-  // U+FF1D, de ancho completo, y ni Inter ni Space Grotesk lo traen, así que
-  // se pintaba como un cuadro vacío. Dibujados se comportan igual en todas
-  // partes y comparten grosor con el resto de los iconos.
+  // Variación de una métrica: los glifos ▲ ▼ ＝ se pintaban como cuadro vacío.
   "trend-up": "M4 17l6-6 4 4 6-7M14 8h6v6",
   "trend-down": "M4 7l6 6 4-4 6 7M14 16h6v-6",
   "trend-flat": "M4 12h16",

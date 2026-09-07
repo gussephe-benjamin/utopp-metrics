@@ -257,7 +257,7 @@ export function MetricSection({
   granularity: Granularity
   monthLabel: string
   footnote: string
-  /** Resumen en teléfono: solo la cifra. Las gráficas viven en su sección. */
+  /** Resumen en teléfono: solo la cifra; las gráficas viven en su sección. */
   compact?: boolean
   onOpen?: () => void
   starred?: boolean
@@ -328,10 +328,6 @@ export function MetricSection({
       </div>
 
       {compact ? (
-        /* En un teléfono, Resumen apilaba las cuatro métricas con sus dos
-           gráficas cada una: 4.800 px de scroll para leer cuatro cifras. Aquí
-           se queda la cifra, y las gráficas siguen enteras en la sección de
-           esa métrica, que es a donde lleva este botón. */
         <button type="button" className="metric-open" onClick={onOpen}>
           Ver gráficas de {name.toLowerCase()}
           <Icon name="chevron-right" size={16} />

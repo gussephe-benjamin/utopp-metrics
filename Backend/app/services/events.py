@@ -1,14 +1,4 @@
-"""El catálogo de eventos, con sus dos cifras y su lista de inscritos.
-
-Las cuatro métricas del panel responden «cómo va todo». Esto responde la
-pregunta de al lado, que hasta ahora no tenía sitio: «¿y este evento en
-concreto?». Sirve para mirar un evento mientras está ocurriendo —cuántos
-apuntados, cuántos ya entraron— y para revisar uno pasado sin abrir el panel
-del organizador.
-
-Los datos salen del mismo schema `formulario` que las métricas. No se escribe
-nada: este panel solo lee.
-"""
+"""Catálogo de eventos: cifras por evento y lista de inscritos. Solo lectura."""
 
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -18,19 +8,13 @@ from sqlalchemy.orm import Session
 
 LIMA = ZoneInfo("America/Lima")
 
-# `formulario.events` no siempre trae hora de fin: es una columna opcional
-# (migración 0014). Sin ella se asume esta duración, igual que hace el resto
-# del panel, para poder decidir si un evento está en curso.
+# `end_date_time` es opcional (migración 0014); sin ella se asume esta duración.
 ASSUMED_DURATION = timedelta(hours=3)
 
 
 def _ends_sql(db: Session) -> str:
-    """Expresión de fin de evento, tolerante a que la columna no exista aún.
-
-    El panel de métricas y el de formulario despliegan por separado, así que
-    puede haber una ventana en la que la migración no esté aplicada. Antes de
-    componer el SQL se comprueba la columna en vez de confiar en que esté.
-    """
+    """Fin del evento. Los dos paneles despliegan por separado, así que la
+    columna puede no existir todavía: se comprueba antes de usarla."""
     existe = db.execute(
         text(
             """
@@ -63,12 +47,8 @@ def _iso(dt: datetime | None) -> str | None:
 
 
 def list_events(db: Session, *, limit: int = 200, public_base_url: str = "") -> dict:
-    """Todos los eventos, del más reciente al más antiguo, con sus dos cifras.
-
-    Las cifras se calculan con subconsultas agregadas y no con un JOIN a
-    `attendees`: con el JOIN, un evento con 300 inscritos multiplicaba las
-    filas antes de agrupar y la consulta crecía sin necesidad.
-    """
+    """Todos los eventos con sus cifras. Agrega en una subconsulta y no con un
+    JOIN a `attendees`, que multiplicaba las filas antes de agrupar."""
     ahora = datetime.now(LIMA)
     ends = _ends_sql(db)
     base = public_base_url.rstrip("/")
@@ -117,8 +97,7 @@ def list_events(db: Session, *, limit: int = 200, public_base_url: str = "") -> 
                 "ends_at": _iso(f.ends_at),
                 "signups": inscritos,
                 "check_ins": asistieron,
-                # None y no 0: sin inscritos no hay tasa que enseñar, y un 0 %
-                # se leería como «vino nadie» en vez de «no se apuntó nadie».
+                # None y no 0: un 0 % se leería como «no vino nadie».
                 "rate": round(asistieron / inscritos, 4) if inscritos else None,
                 "public_url": f"{base}/e/{f.id}" if base else None,
             }
@@ -133,11 +112,8 @@ def list_events(db: Session, *, limit: int = 200, public_base_url: str = "") -> 
 
 
 def event_attendees(db: Session, event_id: str, *, public_base_url: str = "") -> dict | None:
-    """Un evento con su lista de inscritos. `None` si no existe.
-
-    Devuelve a todos, con o sin ticket: quien se inscribió cuenta aunque su
-    boleto no se haya llegado a emitir. El `LEFT JOIN` es lo que lo garantiza.
-    """
+    """Un evento con sus inscritos, o `None`. El `LEFT JOIN` incluye a quien se
+    inscribió sin que su boleto llegara a emitirse."""
     ahora = datetime.now(LIMA)
     ends = _ends_sql(db)
     base = public_base_url.rstrip("/")
