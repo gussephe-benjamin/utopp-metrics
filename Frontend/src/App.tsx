@@ -10,6 +10,7 @@ import {
 } from "./api"
 import { Login } from "./Login"
 import { MetricSection, pct } from "./MetricSection"
+import { EventsSection } from "./EventsSection"
 import { LiveFeed } from "./LiveFeed"
 import { VolumePanel } from "./VolumePanel"
 import { Icon, Sidebar, VIEWS, viewLabel, type View } from "./Sidebar"
@@ -87,8 +88,15 @@ function clock(date: Date) {
 
 /** El hash es la fuente de verdad de la vista: recargar no pierde el sitio. */
 function viewFromHash(): View {
-  const raw = window.location.hash.replace(/^#\/?/, "")
+  const raw = window.location.hash.replace(/^#\/?/, "").split("/")[0]
   return (VIEWS as string[]).includes(raw) ? (raw as View) : "resumen"
+}
+
+/** El id que sigue a `#/eventos/`. Va en el hash y no en el estado para que
+ *  recargar —o compartir el enlace— caiga en el mismo evento. */
+function eventIdFromHash(): string | null {
+  const partes = window.location.hash.replace(/^#\/?/, "").split("/")
+  return partes[0] === "eventos" && partes[1] ? partes[1] : null
 }
 
 /** ¿Estamos en un teléfono? Resumen cambia de forma, no solo de tamaño, así que
@@ -119,6 +127,7 @@ export default function App() {
   const [refreshedAt, setRefreshedAt] = useState<Date | null>(null)
   const esTelefono = useIsPhone()
   const [view, setView] = useState<View>(viewFromHash)
+  const [eventId, setEventId] = useState<string | null>(eventIdFromHash)
   const [menuOpen, setMenuOpen] = useState(false)
   const [pinned, setPinned] = useState(() => localStorage.getItem(PIN_KEY) === "1")
 
@@ -145,7 +154,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const sync = () => setView(viewFromHash())
+    const sync = () => { setView(viewFromHash()); setEventId(eventIdFromHash()) }
     window.addEventListener("hashchange", sync)
     return () => window.removeEventListener("hashchange", sync)
   }, [])
@@ -197,6 +206,7 @@ export default function App() {
   function go(next: View) {
     window.location.hash = `/${next}`
     setView(next)
+    setEventId(null)
     setMenuOpen(false)
     window.scrollTo({ top: 0 })
   }
@@ -277,11 +287,15 @@ export default function App() {
               </button>
               <div>
                 <h1>{viewLabel(view)}</h1>
-                <div className="sub">{subtitle}</div>
+                <div className="sub">
+                  {view === "eventos"
+                    ? "Cada evento con sus inscritos y quién ya entró. Se actualiza solo."
+                    : subtitle}
+                </div>
               </div>
             </div>
             <div className="topbar-right">
-              {view !== "glossary" ? (
+              {view !== "glossary" && view !== "eventos" ? (
                 <div className="controls">
                   <div className="tabs" role="tablist" aria-label="Granularidad del histórico">
                     {(["week", "month"] as const).map((g) => (
@@ -328,7 +342,21 @@ export default function App() {
 
           {data && current ? (
             <>
-              {view === "glossary" ? (
+              {view === "eventos" ? (
+                <EventsSection
+                  eventId={eventId}
+                  onOpen={(id) => {
+                    window.location.hash = `/eventos/${id}`
+                    setEventId(id)
+                    window.scrollTo({ top: 0 })
+                  }}
+                  onBack={() => {
+                    window.location.hash = "/eventos"
+                    setEventId(null)
+                    window.scrollTo({ top: 0 })
+                  }}
+                />
+              ) : view === "glossary" ? (
                 <section className="panel glossary">
                   <dl>
                     <dt>El periodo de la estrella norte lo fija el evento</dt>

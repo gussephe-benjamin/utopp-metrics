@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:5175"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 12
     TIMEZONE: str = "America/Lima"
+    # De dónde cuelga el enlace público de un evento (`/e/<id>`). Vacío = sin
+    # enlace: es preferible no mostrarlo a mostrar uno que lleva a ninguna parte.
+    FORMULARIO_PUBLIC_URL: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:

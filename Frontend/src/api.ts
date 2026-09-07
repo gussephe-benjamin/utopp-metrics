@@ -132,3 +132,43 @@ export function fetchMetrics(granularity: Granularity, periods: number) {
   const q = new URLSearchParams({ granularity, periods: String(periods) })
   return request<MetricsResponse>(`/metrics?${q}`)
 }
+
+/** Un evento del catálogo, con sus dos cifras ya calculadas por el servidor. */
+export type EventStatus = "en_curso" | "proximo" | "pasado" | "borrador" | "sin_fecha"
+
+export type EventRow = {
+  id: string
+  title: string
+  location: string | null
+  capacity: number | null
+  status: EventStatus
+  starts_at: string | null
+  ends_at: string | null
+  signups: number
+  check_ins: number
+  /** null cuando no hay inscritos: un 0 % se leería como "no vino nadie". */
+  rate: number | null
+  /** null si el panel no tiene configurada la URL pública de Formulario. */
+  public_url: string | null
+}
+
+export type EventsResponse = { as_of: string; timezone: string; total: number; events: EventRow[] }
+
+export type EventAttendee = {
+  id: string
+  full_name: string
+  email: string
+  registered_at: string | null
+  checked_in: boolean
+  checked_in_at: string | null
+}
+
+export type EventDetail = { as_of: string; event: EventRow; attendees: EventAttendee[] }
+
+export function fetchEvents() {
+  return request<EventsResponse>("/events")
+}
+
+export function fetchEventDetail(id: string) {
+  return request<EventDetail>(`/events/${id}`)
+}

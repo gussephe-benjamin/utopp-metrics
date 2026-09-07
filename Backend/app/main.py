@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.database.session import ping
 from app.routers.auth import router as auth_router
+from app.routers.events import router as events_router
 from app.routers.metrics import router as metrics_router
 
 app = FastAPI(title="Utopp Metrics", version="0.1.0")
@@ -18,6 +19,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(metrics_router)
+app.include_router(events_router)
 
 
 @app.get("/")

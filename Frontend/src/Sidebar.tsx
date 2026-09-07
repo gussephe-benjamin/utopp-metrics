@@ -1,12 +1,13 @@
 import type { MetricKey } from "./api"
 
-export type View = "resumen" | MetricKey | "glossary"
+export type View = "resumen" | "eventos" | MetricKey | "glossary"
 
 type IconName =
   | "grid" | "star" | "layers" | "target" | "repeat" | "book"
   | "logout" | "menu" | "close" | "pin" | "unpin"
   | "eye" | "eye-off"
   | "trend-up" | "trend-down" | "trend-flat" | "chevron-right"
+  | "calendar" | "arrow-left" | "external"
 
 const PATHS: Record<IconName, string> = {
   grid: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
@@ -32,6 +33,9 @@ const PATHS: Record<IconName, string> = {
   "trend-down": "M4 7l6 6 4-4 6 7M14 16h6v-6",
   "trend-flat": "M4 12h16",
   "chevron-right": "M9 6l6 6-6 6",
+  calendar: "M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z",
+  "arrow-left": "M19 12H5M11 18l-6-6 6-6",
+  external: "M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5",
 }
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
@@ -55,7 +59,13 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
 type Item = { id: View; label: string; icon: IconName }
 
 const NAV: { group: string; items: Item[] }[] = [
-  { group: "Principal", items: [{ id: "resumen", label: "Resumen", icon: "grid" }] },
+  {
+    group: "Principal",
+    items: [
+      { id: "resumen", label: "Resumen", icon: "grid" },
+      { id: "eventos", label: "Eventos", icon: "calendar" },
+    ],
+  },
   {
     group: "Métricas",
     items: [
